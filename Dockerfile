@@ -24,7 +24,10 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /usr/share/doc /usr/share/man
     
 # Install latest hactool & switch-tools from dkp pacman & update everything
-RUN dkp-pacman -S switch-tools hactool --noconfirm && dkp-pacman -Syu --noconfirm
+# Pinned: use the devkitA64 shipped in the base image and only fetch
+# switch-tools if it is missing. No -Syu, so the toolchain cannot drift
+# from what the pinned image provides (and pkg.devkitpro.org 403s to CI).
+RUN (command -v elf2nso >/dev/null && command -v build_pfs0 >/dev/null && command -v npdmtool >/dev/null) || dkp-pacman -S switch-tools --noconfirm
 
 # # Install hactool from Git (optional)
 # ENV HACTOOL_REV=1d64a83450e025622f3468c28fc4164dad2c5ef6
