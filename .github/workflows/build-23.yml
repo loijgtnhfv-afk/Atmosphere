@@ -24,7 +24,7 @@ jobs:
         run: >
           docker run --rm -v "$PWD":/ams -w /ams
           --user "$(id -u):$(id -g)" -e HOME=/tmp
-          ams-build sh -c 'git config --global --add safe.directory /ams && make dist-no-debug-nx_release -j"$(nproc)"'
+          ams-build sh -c 'git config --global --add safe.directory /ams && make -f atmosphere.mk dist-no-debug ATMOSPHERE_MAKEFILE_TARGET=nx_release ATMOSPHERE_BUILD_NAME=release ATMOSPHERE_BOARD=nx-hac-001 ATMOSPHERE_CPU=arm-cortex-a57 ATMOSPHERE_BUILD_SETTINGS= -j"$(nproc)"'
 
       - name: List outputs
         run: |
