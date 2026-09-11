@@ -18,7 +18,13 @@ jobs:
         run: docker build -t ams-build .
 
       - name: Build Atmosphere (dist-no-debug, nx_release)
-        run: docker run --rm -v "$PWD":/ams -w /ams ams-build make dist-no-debug-nx_release -j"$(nproc)"
+        # Run as the runner's uid so the bind mount is writable and git does not
+        # reject the checkout as "dubious ownership"; HOME=/tmp gives that uid a
+        # writable place for the safe.directory setting.
+        run: >
+          docker run --rm -v "$PWD":/ams -w /ams
+          --user "$(id -u):$(id -g)" -e HOME=/tmp
+          ams-build sh -c 'git config --global --add safe.directory /ams && make dist-no-debug-nx_release -j"$(nproc)"'
 
       - name: List outputs
         run: |
