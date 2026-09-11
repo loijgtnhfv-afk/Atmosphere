@@ -1,0 +1,41 @@
+name: Build 23_support
+
+on:
+  push:
+    branches: [23_support]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build container image (official Dockerfile)
+        run: docker build -t ams-build .
+
+      - name: Build Atmosphere (dist-no-debug, nx_release)
+        # Run as the runner's uid so the bind mount is writable and git does not
+        # reject the checkout as "dubious ownership"; HOME=/tmp gives that uid a
+        # writable place for the safe.directory setting.
+        run: >
+          docker run --rm -v "$PWD":/ams -w /ams
+          --user "$(id -u):$(id -g)" -e HOME=/tmp
+          ams-build sh -c 'git config --global --add safe.directory /ams && make dist-no-debug-nx_release -j"$(nproc)"'
+
+      - name: List outputs
+        run: |
+          ls -laR out 2>/dev/null | head -80 || true
+          find . -name 'atmosphere-*.zip' -o -name 'fusee.bin' | head -20
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: atmosphere-23_support
+          path: |
+            out/**
+            **/atmosphere-*.zip
+          if-no-files-found: error
