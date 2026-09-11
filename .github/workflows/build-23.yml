@@ -1,0 +1,35 @@
+name: Build 23_support
+
+on:
+  push:
+    branches: [23_support]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build container image (official Dockerfile)
+        run: docker build -t ams-build .
+
+      - name: Build Atmosphere (dist-no-debug, nx_release)
+        run: docker run --rm -v "$PWD":/ams -w /ams ams-build make dist-no-debug-nx_release -j"$(nproc)"
+
+      - name: List outputs
+        run: |
+          ls -laR out 2>/dev/null | head -80 || true
+          find . -name 'atmosphere-*.zip' -o -name 'fusee.bin' | head -20
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: atmosphere-23_support
+          path: |
+            out/**
+            **/atmosphere-*.zip
+          if-no-files-found: error
